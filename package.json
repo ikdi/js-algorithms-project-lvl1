@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "description": "[![Actions Status](https://github.com/kdi-course/js-algorithms-project-lvl1/workflows/hexlet-check/badge.svg)](https://github.com/kdi-course/js-algorithms-project-lvl1/actions)",
   "main": "index.js",
+  "type": "module",
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest"
   },
   "repository": {
     "type": "git",
@@ -15,5 +20,14 @@
   "bugs": {
     "url": "https://github.com/kdi-course/js-algorithms-project-lvl1/issues"
   },
-  "homepage": "https://github.com/kdi-course/js-algorithms-project-lvl1#readme"
+  "homepage": "https://github.com/kdi-course/js-algorithms-project-lvl1#readme",
+  "devDependencies": {
+    "@jest/globals": "^26.6.2",
+    "eslint": "^7.21.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.9",
+    "jest": "^26.6.3",
+    "jest-cli": "^26.6.3"
+  }
 }
