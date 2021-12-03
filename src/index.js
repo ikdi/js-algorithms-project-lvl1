@@ -1,17 +1,25 @@
-const buildSearchEngine = (documents) => {
-  const index = documents.reduce((acc, document) => {
-    const { id, text } = document;
-    const words = text.match(/\w+/g) ?? [];
-    /* eslint-disable no-param-reassign */
-    return words.reduce((accWords, word) => {
-      const records = accWords[word] ?? {};
-      accWords[word] = {
-        ...records,
-        [id]: (records[id] ?? 0) + 1,
-      };
-      return accWords;
-    }, acc);
-  }, {});
+const toDocumentTerms = (collection) => collection.map(({ id, text }) => ({ id, terms: text.match(/\w+/g) ?? [] }));
+
+const buildSearchEngine = (collection) => {
+  const calcTdIdf = (termFrequency, documentSize, collectionSize, termCollectionSize) => (
+    (termFrequency / documentSize) * Math.log2(collectionSize / termCollectionSize)
+  );
+
+  const size = collection.length;
+
+  const documentTerms = toDocumentTerms(collection);
+  /* eslint-disable no-param-reassign */
+  const reverseIndex = documentTerms.reduce((acc, { id, terms }) => terms
+    .reduce((accDocument, term) => {
+      const list = accDocument[term] ?? {};
+      accDocument[term] = { ...list, [id]: (list[id] ?? 0) + 1 };
+      return accDocument;
+    }, acc), {});
+
+  const statistics = documentTerms.reduce(
+    (acc, { id, terms }) => ({ ...acc, [id]: terms.length }),
+    {},
+  );
 
   return {
     search(words) {
@@ -20,24 +28,27 @@ const buildSearchEngine = (documents) => {
       const terms = words.match(/\w+/g);
       // eslint-disable-next-line no-restricted-syntax
       for (const term of terms) {
-        const stats = index[term];
-        if (stats) {
+        const list = reverseIndex[term];
+        const listSize = Object.keys(list).length;
+
+        if (list) {
           // eslint-disable-next-line no-restricted-syntax
-          for (const [docId, count] of Object.entries(stats)) {
+          for (const [docId, frequency] of Object.entries(list)) {
             let document = lexer[docId];
             if (!document) {
-              document = { id: docId, entries: 0, total: 0 };
+              document = { id: docId, score: 0 };
               lexer[docId] = document;
             }
-            document.entries += 1;
-            document.total += count;
+
+            const score = calcTdIdf(frequency, statistics[docId], size, listSize);
+            document.score += score;
           }
         }
       }
 
       return Object
         .values(lexer)
-        .sort((a, b) => b.entries - a.entries || b.total - a.total)
+        .sort((a, b) => b.score - a.score)
         .map(({ id }) => id);
     },
   };
