@@ -4,7 +4,7 @@ const toDocumentTerms = (collection) => collection.map(
   ({ id, text }) => ({ id, terms: words(text) }),
 );
 const calcTdIdf = (termFrequency, documentSize, collectionSize, termCollectionSize) => (
-  (termFrequency / documentSize) * Math.log10(collectionSize / termCollectionSize)
+  (termFrequency / documentSize) * Math.log2(collectionSize / termCollectionSize)
 );
 
 const buildIndex = (documentTerms) => documentTerms.reduce((acc, { id, terms }) => terms
