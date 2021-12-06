@@ -3,8 +3,8 @@ import words from 'lodash/words';
 const toDocumentTerms = (collection) => collection.map(
   ({ id, text }) => ({ id, terms: words(text) }),
 );
-const calcTdIdf = (termFrequency, documentSize, collectionSize, termCollectionSize) => (
-  (termFrequency / documentSize) * Math.log2(collectionSize / termCollectionSize)
+const calcTdIdf = (termFrequency, documentSize, collectionSize, ternInCollectionsCount) => (
+  (termFrequency / documentSize) * Math.log2(collectionSize / ternInCollectionsCount)
 );
 
 const buildIndex = (documentTerms) => documentTerms.reduce((acc, { id, terms }) => terms
@@ -21,7 +21,7 @@ const countStatistic = (documentTerms) => documentTerms.reduce(
 );
 
 const buildSearchEngine = (collection) => {
-  const size = collection.length;
+  const collectionSize = collection.length;
 
   const documentTerms = toDocumentTerms(collection);
   /* eslint-disable no-param-reassign */
@@ -41,23 +41,31 @@ const buildSearchEngine = (collection) => {
       for (const term of terms) {
         const list = reverseIndex[term];
 
-        console.dir({ query, term, list });
-        if (!list) return [];
+        // console.dir({ query, term, list });
+        if (list) {
+          const ternInCollectionsCount = Object.keys(list).length;
+          // eslint-disable-next-line no-restricted-syntax
+          for (const [docId, termFrequency] of Object.entries(list)) {
+            let document = unsortedResult[docId];
+            if (!document) {
+              document = { id: docId, score: 0 };
+              unsortedResult[docId] = document;
+            }
 
-        const listSize = Object.keys(list).length;
-        // eslint-disable-next-line no-restricted-syntax
-        for (const [docId, frequency] of Object.entries(list)) {
-          let document = unsortedResult[docId];
-          if (!document) {
-            document = { id: docId, score: 0 };
-            unsortedResult[docId] = document;
+            const score = calcTdIdf(
+              termFrequency, statistics[docId], collectionSize, ternInCollectionsCount,
+            );
+            console.dir({
+              term,
+              docId,
+              termFrequency,
+              documentSize: statistics[docId],
+              collectionSize,
+              ternInCollectionsCount,
+              score,
+            });
+            document.score += score;
           }
-
-          const score = calcTdIdf(frequency, statistics[docId], size, listSize);
-          // console.dir({
-          //   docId, frequency, allBytDocs: statistics[docId], size, listSize, score,
-          // });
-          document.score += score;
         }
       }
 
