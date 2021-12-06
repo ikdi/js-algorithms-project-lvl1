@@ -3,8 +3,11 @@ import words from 'lodash/words';
 const toDocumentTerms = (collection) => collection.map(
   ({ id, text }) => ({ id, terms: words(text) }),
 );
-const calcTdIdf = (termFrequency, documentSize, collectionSize, ternInCollectionsCount) => (
-  (termFrequency / documentSize) * Math.log2(collectionSize / ternInCollectionsCount)
+
+const calcTdIdf = (
+  termDocumentFrequency, documentSize, collectionSize, termCollectionFrequency,
+) => (
+  (termDocumentFrequency / documentSize) * Math.log2(1 + collectionSize / termCollectionFrequency)
 );
 
 const buildIndex = (documentTerms) => documentTerms.reduce((acc, { id, terms }) => terms
@@ -43,9 +46,9 @@ const buildSearchEngine = (collection) => {
 
         // console.dir({ query, term, list });
         if (list) {
-          const ternInCollectionsCount = Object.keys(list).length;
+          const termCollectionFrequency = Object.keys(list).length;
           // eslint-disable-next-line no-restricted-syntax
-          for (const [docId, termFrequency] of Object.entries(list)) {
+          for (const [docId, termDocumentFrequency] of Object.entries(list)) {
             let document = unsortedResult[docId];
             if (!document) {
               document = { id: docId, score: 0 };
@@ -53,15 +56,15 @@ const buildSearchEngine = (collection) => {
             }
 
             const score = calcTdIdf(
-              termFrequency, statistics[docId], collectionSize, ternInCollectionsCount,
+              termDocumentFrequency, statistics[docId], collectionSize, termCollectionFrequency,
             );
             console.dir({
               term,
               docId,
-              termFrequency,
+              termDocumentFrequency,
               documentSize: statistics[docId],
               collectionSize,
-              ternInCollectionsCount,
+              termCollectionFrequency,
               score,
             });
             document.score += score;
