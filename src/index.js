@@ -31,20 +31,13 @@ const buildSearchEngine = (collection) => {
   const reverseIndex = buildIndex(documentTerms);
   const statistics = countStatistic(documentTerms);
 
-  // console.dir({ reverseIndex });
-  console.dir({ statistics });
-
   return {
     search(query) {
-      console.log('query:', query);
       const unsortedResult = {};
-      // const terms = query.match(/\w+/g);
       const terms = words(query);
       // eslint-disable-next-line no-restricted-syntax
       for (const term of terms) {
         const list = reverseIndex[term];
-
-        // console.dir({ query, term, list });
         if (list) {
           const termCollectionFrequency = Object.keys(list).length;
           // eslint-disable-next-line no-restricted-syntax
@@ -58,21 +51,10 @@ const buildSearchEngine = (collection) => {
             const score = calcTdIdf(
               termDocumentFrequency, statistics[docId], collectionSize, termCollectionFrequency,
             );
-            console.dir({
-              term,
-              docId,
-              termDocumentFrequency,
-              documentSize: statistics[docId],
-              collectionSize,
-              termCollectionFrequency,
-              score,
-            });
             document.score += score;
           }
         }
       }
-
-      console.dir({ query, unsortedResult });
 
       return Object
         .values(unsortedResult)
