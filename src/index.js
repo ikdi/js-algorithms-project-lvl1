@@ -26,16 +26,21 @@ const countStatistic = (documentTerms) => documentTerms.reduce(
   {},
 );
 
+const sortScores = (scores) => Object
+  .entries(scores)
+  .sort(([, ascore], [, bscore]) => bscore - ascore)
+  .map(([id]) => id);
+
 const prepareEngine = (collectionSize, reverseIndex, statistics) => (query) => {
   const scores = {};
   const terms = words(query);
-  // eslint-disable-next-line no-restricted-syntax
-  for (const term of terms) {
+
+  terms.forEach((term) => {
     const list = reverseIndex[term];
     if (list) {
       const termCollectionFrequency = Object.keys(list).length;
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [docId, termDocumentFrequency] of Object.entries(list)) {
+
+      Object.entries(list).forEach(([docId, termDocumentFrequency]) => {
         const score = calcTdIdf(
           termDocumentFrequency,
           statistics[docId],
@@ -44,14 +49,11 @@ const prepareEngine = (collectionSize, reverseIndex, statistics) => (query) => {
         );
         const currentScore = scores[docId];
         scores[docId] = currentScore ? currentScore + score : score;
-      }
+      });
     }
-  }
+  });
 
-  return Object
-    .entries(scores)
-    .sort(([, ascore], [, bscore]) => bscore - ascore)
-    .map(([id]) => id);
+  return sortScores(scores);
 };
 
 const buildSearchEngine = (collection) => {
